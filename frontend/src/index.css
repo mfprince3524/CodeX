@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#F7FAFC] text-[#102033] font-sans antialiased selection:bg-[#0A5BFF]/10 selection:text-[#0A5BFF];
+  }
+}
+
+/* Custom scrollbars for scientific panels */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* Glassmorphism utility */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(229, 234, 240, 0.9);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid #E5EAF0;
+}
+
+/* Citation hover styling */
+.citation-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  margin: 0 2px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #0A5BFF;
+  background-color: #EBF3FF;
+  border: 1px solid #C2DCFF;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  vertical-align: baseline;
+  line-height: 1.35;
+  user-select: none;
+}
+
+.citation-chip:hover {
+  background-color: #0A5BFF;
+  color: #FFFFFF;
+  border-color: #0A5BFF;
+  box-shadow: 0 2px 6px rgba(10, 91, 255, 0.25);
+  transform: translateY(-1px);
+}
