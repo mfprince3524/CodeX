@@ -48,51 +48,51 @@ export const FutureLifeSimulatorPage: React.FC<FutureLifeSimulatorPageProps> = (
 }) => {
   const roundNum = (n: number) => Math.round(n * 10) / 10;
 
-  // User Biomarkers State
+  // User Biomarkers State (Defaulted to Healthy Standard Baseline)
   const [biomarkers, setBiomarkers] = useState<UserBiomarkersState>({
     name: "Mohammed",
-    age: 34,
+    age: 30,
     gender: "male",
     height_cm: 175,
-    weight_kg: 82,
+    weight_kg: 74,
     blood_group: "O+",
-    fasting_glucose_mg_dl: 118,
-    hba1c_pct: 6.2,
-    total_cholesterol_mg_dl: 215,
-    ldl_cholesterol_mg_dl: 145,
-    hdl_cholesterol_mg_dl: 42,
-    triglycerides_mg_dl: 190,
-    systolic_bp: 132,
-    diastolic_bp: 84,
-    alt_u_l: 48,
-    ast_u_l: 36,
-    egfr_ml_min: 98,
-    creatinine_mg_dl: 0.95,
-    tsh_uiu_ml: 2.1,
-    family_history_diabetes: true,
-    family_history_heart_disease: true
+    fasting_glucose_mg_dl: 92,
+    hba1c_pct: 5.2,
+    total_cholesterol_mg_dl: 180,
+    ldl_cholesterol_mg_dl: 105,
+    hdl_cholesterol_mg_dl: 58,
+    triglycerides_mg_dl: 120,
+    systolic_bp: 118,
+    diastolic_bp: 76,
+    alt_u_l: 22,
+    ast_u_l: 20,
+    egfr_ml_min: 105,
+    creatinine_mg_dl: 0.85,
+    tsh_uiu_ml: 1.8,
+    family_history_diabetes: false,
+    family_history_heart_disease: false
   });
 
   // Lifestyle Habits State
   const [habits, setHabits] = useState<LifestyleHabitsState>({
-    sleep_hours: 6.0,
-    exercise_minutes_per_day: 15,
-    exercise_days_per_week: 2,
-    daily_water_liters: 1.8,
-    fast_food_meals_per_week: 4,
-    stress_level_1_to_10: 7,
+    sleep_hours: 7.5,
+    exercise_minutes_per_day: 35,
+    exercise_days_per_week: 4,
+    daily_water_liters: 2.5,
+    fast_food_meals_per_week: 1,
+    stress_level_1_to_10: 3,
     smoking_status: "never",
-    alcohol_drinks_per_week: 2,
-    screen_time_hours_per_day: 8.5,
-    working_hours_per_day: 9.0
+    alcohol_drinks_per_week: 1,
+    screen_time_hours_per_day: 6.0,
+    working_hours_per_day: 8.0
   });
 
   // Interactive Live Slider State
-  const [sliderExercise, setSliderExercise] = useState<number>(30);
+  const [sliderExercise, setSliderExercise] = useState<number>(35);
   const [sliderSleep, setSliderSleep] = useState<number>(7.5);
   const [sliderWater, setSliderWater] = useState<number>(2.5);
   const [sliderFastFood, setSliderFastFood] = useState<number>(1);
-  const [sliderStress, setSliderStress] = useState<number>(4);
+  const [sliderStress, setSliderStress] = useState<number>(3);
 
   // Dynamic Slider Calculated Deltas
   const [sliderResult, setSliderResult] = useState<SliderDeltaResult | null>(null);
@@ -106,35 +106,76 @@ export const FutureLifeSimulatorPage: React.FC<FutureLifeSimulatorPageProps> = (
   const [customGoalExerciseMin, setCustomGoalExerciseMin] = useState<number>(35);
   const [customGoalSleepHours, setCustomGoalSleepHours] = useState<number>(7.5);
 
+  // Interactive Input Modules (Modules 1, 2, 3) State
+  const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
+  const [formTab, setFormTab] = useState<'profile' | 'labs' | 'lifestyle'>('labs');
+
   // OCR Modal
   const [isOCRModalOpen, setIsOCRModalOpen] = useState<boolean>(false);
   const [ocrReportText, setOcrReportText] = useState<string>('');
   const [ocrSuccessMsg, setOcrSuccessMsg] = useState<string | null>(null);
 
   // Persona Presets
-  const applyPreset = (preset: 'prediabetic' | 'athlete' | 'executive') => {
+  const applyPreset = (preset: 'standard' | 'prediabetic' | 'athlete' | 'executive') => {
     let newBio = { ...biomarkers };
     let newHabits = { ...habits };
-    if (preset === 'prediabetic') {
+    if (preset === 'standard') {
+      newBio = {
+        ...biomarkers,
+        name: "Mohammed (Healthy Baseline)",
+        age: 30,
+        height_cm: 175,
+        weight_kg: 74,
+        blood_group: "O+",
+        fasting_glucose_mg_dl: 92,
+        hba1c_pct: 5.2,
+        total_cholesterol_mg_dl: 180,
+        ldl_cholesterol_mg_dl: 105,
+        hdl_cholesterol_mg_dl: 58,
+        triglycerides_mg_dl: 120,
+        systolic_bp: 118,
+        diastolic_bp: 76,
+        alt_u_l: 22,
+        family_history_diabetes: false,
+        family_history_heart_disease: false
+      };
+      newHabits = {
+        ...habits,
+        sleep_hours: 7.5,
+        exercise_minutes_per_day: 35,
+        exercise_days_per_week: 4,
+        daily_water_liters: 2.5,
+        fast_food_meals_per_week: 1,
+        stress_level_1_to_10: 3,
+        smoking_status: "never"
+      };
+    } else if (preset === 'prediabetic') {
       newBio = {
         ...biomarkers,
         name: "Mohammed A. (Pre-diabetic Profile)",
         age: 34,
+        height_cm: 175,
         weight_kg: 83.5,
         fasting_glucose_mg_dl: 135,
         hba1c_pct: 6.4,
+        total_cholesterol_mg_dl: 225,
         ldl_cholesterol_mg_dl: 170,
         hdl_cholesterol_mg_dl: 38,
         systolic_bp: 138,
         diastolic_bp: 88,
-        alt_u_l: 52
+        alt_u_l: 52,
+        family_history_diabetes: true,
+        family_history_heart_disease: true
       };
       newHabits = {
         ...habits,
         sleep_hours: 5.5,
         exercise_minutes_per_day: 10,
+        exercise_days_per_week: 2,
+        daily_water_liters: 1.8,
         fast_food_meals_per_week: 5,
-        stress_level_1_to_10: 8
+        stress_level_1_to_10: 8,
+        smoking_status: "never"
       };
     } else if (preset === 'athlete') {
       newBio = {
@@ -149,7 +190,9 @@ export const FutureLifeSimulatorPage: React.FC<FutureLifeSimulatorPageProps> = (
         hdl_cholesterol_mg_dl: 68,
         systolic_bp: 112,
         diastolic_bp: 72,
-        alt_u_l: 22
+        alt_u_l: 22,
+        family_history_diabetes: false,
+        family_history_heart_disease: false
       };
       newHabits = {
         ...habits,
@@ -158,27 +201,34 @@ export const FutureLifeSimulatorPage: React.FC<FutureLifeSimulatorPageProps> = (
         exercise_days_per_week: 5,
         daily_water_liters: 3.2,
         fast_food_meals_per_week: 0,
-        stress_level_1_to_10: 3
+        stress_level_1_to_10: 3,
+        smoking_status: "never"
       };
     } else {
       newBio = {
         ...biomarkers,
         name: "Alex R. (High-Stress Executive)",
         age: 42,
+        height_cm: 178,
         weight_kg: 88,
         fasting_glucose_mg_dl: 112,
         hba1c_pct: 5.8,
         ldl_cholesterol_mg_dl: 158,
         systolic_bp: 142,
         diastolic_bp: 92,
-        alt_u_l: 44
+        alt_u_l: 44,
+        family_history_diabetes: true,
+        family_history_heart_disease: true
       };
       newHabits = {
         ...habits,
         sleep_hours: 5.0,
         exercise_minutes_per_day: 5,
+        exercise_days_per_week: 1,
+        daily_water_liters: 1.5,
         fast_food_meals_per_week: 6,
-        stress_level_1_to_10: 9
+        stress_level_1_to_10: 9,
+        smoking_status: "current"
       };
     }
     setBiomarkers(newBio);
@@ -304,6 +354,12 @@ export const FutureLifeSimulatorPage: React.FC<FutureLifeSimulatorPageProps> = (
           <div className="pt-2 flex items-center gap-2 flex-wrap text-xs">
             <span className="text-[#A1D4D2] font-semibold text-[11px]">Quick Load Demo Profile:</span>
             <button
+              onClick={() => applyPreset('standard')}
+              className="px-2.5 py-1 bg-white/15 hover:bg-white/25 rounded-lg text-white font-medium border border-white/20 transition-all cursor-pointer"
+            >
+              ✨ Standard (30yo)
+            </button>
+            <button
               onClick={() => applyPreset('prediabetic')}
               className="px-2.5 py-1 bg-white/15 hover:bg-white/25 rounded-lg text-white font-medium border border-white/20 transition-all cursor-pointer"
             >
@@ -322,8 +378,19 @@ export const FutureLifeSimulatorPage: React.FC<FutureLifeSimulatorPageProps> = (
               💼 High-Stress Exec (42yo)
             </button>
             <button
+              onClick={() => setIsFormOpen(!isFormOpen)}
+              className={`px-3 py-1 rounded-lg font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                isFormOpen
+                  ? 'bg-white text-[#002B2E] shadow-sm'
+                  : 'bg-white/20 text-white hover:bg-white/30 border border-white/20'
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>{isFormOpen ? 'Hide Input Form ▲' : '📝 Enter Lab Values & Lifestyle ▼'}</span>
+            </button>
+            <button
               onClick={() => setIsOCRModalOpen(true)}
-              className="ml-auto px-3 py-1 bg-[#00D1C1] hover:bg-[#00B8A9] text-[#002B2E] font-bold rounded-lg shadow-xs flex items-center gap-1.5 transition-colors"
+              className="ml-auto px-3 py-1 bg-[#00D1C1] hover:bg-[#00B8A9] text-[#002B2E] font-bold rounded-lg shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <Upload className="w-3.5 h-3.5" />
               <span>Upload Medical Report (OCR)</span>
@@ -331,6 +398,442 @@ export const FutureLifeSimulatorPage: React.FC<FutureLifeSimulatorPageProps> = (
           </div>
         </div>
       </div>
+
+      {/* Interactive Patient Input Drawer (Modules 1, 2, 3) */}
+      {isFormOpen && (
+        <div className="bg-white border-2 border-[#00A896]/30 rounded-2xl p-5 sm:p-6 shadow-md space-y-5 animate-in slide-in-from-top-4 duration-300">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E2EEEC]">
+            <div>
+              <h2 className="text-base font-bold text-[#0F2E33] flex items-center gap-2">
+                <Sliders className="w-4 h-4 text-[#00606B]" />
+                <span>Patient Input Center · Biomarkers & Lifestyle Synthesis</span>
+              </h2>
+              <p className="text-xs text-[#55696C]">
+                Customize your exact clinical biomarkers, lab panel values, and lifestyle habits to compute your personalized health trajectory.
+              </p>
+            </div>
+
+            {/* Sub-tabs for Form Modules */}
+            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
+              {[
+                { id: 'profile', label: '1. User Profile' },
+                { id: 'labs', label: '2. Medical Reports (Labs)' },
+                { id: 'lifestyle', label: '3. Lifestyle Habits' }
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setFormTab(tab.id as any)}
+                  className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                    formTab === tab.id
+                      ? 'bg-[#00606B] text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Module 1: User Profile & Biometrics */}
+          {formTab === 'profile' && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 text-xs">
+              <div className="space-y-1">
+                <label className="font-bold text-[#334648]">Full Name</label>
+                <input
+                  type="text"
+                  value={biomarkers.name}
+                  onChange={(e) => setBiomarkers({ ...biomarkers, name: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-[#D5E1DE] bg-[#F7FAFA] text-[#1C2826] font-medium"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-[#334648]">Age (Years)</label>
+                <input
+                  type="number"
+                  value={biomarkers.age}
+                  onChange={(e) => setBiomarkers({ ...biomarkers, age: parseInt(e.target.value) || 30 })}
+                  className="w-full p-2.5 rounded-xl border border-[#D5E1DE] bg-[#F7FAFA] text-[#1C2826] font-medium"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-[#334648]">Gender</label>
+                <select
+                  value={biomarkers.gender}
+                  onChange={(e) => setBiomarkers({ ...biomarkers, gender: e.target.value as 'male' | 'female' })}
+                  className="w-full p-2.5 rounded-xl border border-[#D5E1DE] bg-[#F7FAFA] text-[#1C2826] font-medium"
+                >
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-[#334648]">Blood Group</label>
+                <select
+                  value={biomarkers.blood_group}
+                  onChange={(e) => setBiomarkers({ ...biomarkers, blood_group: e.target.value })}
+                  className="w-full p-2.5 rounded-xl border border-[#D5E1DE] bg-[#F7FAFA] text-[#1C2826] font-medium"
+                >
+                  <option value="O+">O Positive (O+)</option>
+                  <option value="O-">O Negative (O-)</option>
+                  <option value="A+">A Positive (A+)</option>
+                  <option value="A-">A Negative (A-)</option>
+                  <option value="B+">B Positive (B+)</option>
+                  <option value="B-">B Negative (B-)</option>
+                  <option value="AB+">AB Positive (AB+)</option>
+                  <option value="AB-">AB Negative (AB-)</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-[#334648]">Height (cm)</label>
+                <input
+                  type="number"
+                  value={biomarkers.height_cm}
+                  onChange={(e) => setBiomarkers({ ...biomarkers, height_cm: parseFloat(e.target.value) || 175 })}
+                  className="w-full p-2.5 rounded-xl border border-[#D5E1DE] bg-[#F7FAFA] text-[#1C2826] font-medium"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-[#334648]">Weight (kg)</label>
+                <input
+                  type="number"
+                  step="0.5"
+                  value={biomarkers.weight_kg}
+                  onChange={(e) => setBiomarkers({ ...biomarkers, weight_kg: parseFloat(e.target.value) || 75 })}
+                  className="w-full p-2.5 rounded-xl border border-[#D5E1DE] bg-[#F7FAFA] text-[#1C2826] font-medium"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-[#334648]">Calculated BMI</label>
+                <div className="p-2.5 rounded-xl bg-[#E8F5F3] border border-[#CDECE8] text-[#00606B] font-extrabold flex items-center justify-between">
+                  <span>{(biomarkers.weight_kg / ((biomarkers.height_cm/100) * (biomarkers.height_cm/100))).toFixed(1)} kg/m²</span>
+                  <span className="text-[10.5px] font-semibold px-2 py-0.5 rounded bg-white">
+                    {(biomarkers.weight_kg / ((biomarkers.height_cm/100) * (biomarkers.height_cm/100))) >= 25 ? 'Overweight' : 'Normal'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-2 flex flex-col justify-center pt-2">
+                <label className="flex items-center gap-2 cursor-pointer text-[#334648] font-semibold">
+                  <input
+                    type="checkbox"
+                    checked={biomarkers.family_history_diabetes}
+                    onChange={(e) => setBiomarkers({ ...biomarkers, family_history_diabetes: e.target.checked })}
+                    className="accent-[#00606B] rounded"
+                  />
+                  <span>Family History: Diabetes</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer text-[#334648] font-semibold">
+                  <input
+                    type="checkbox"
+                    checked={biomarkers.family_history_heart_disease}
+                    onChange={(e) => setBiomarkers({ ...biomarkers, family_history_heart_disease: e.target.checked })}
+                    className="accent-[#00606B] rounded"
+                  />
+                  <span>Family History: Heart Disease</span>
+                </label>
+              </div>
+            </div>
+          )}
+
+          {/* Module 2: Medical Reports & Diagnostic Lab Values */}
+          {formTab === 'labs' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between bg-[#F0FBF9] p-3 rounded-xl border border-[#CDECE8] text-xs">
+                <span className="text-[#00606B] font-semibold">
+                  💡 Diagnostic Labs extractable via OCR: Blood Sugar, HbA1c, Lipid Panel, Blood Pressure, Liver (ALT/AST), Kidney (eGFR/Creatinine).
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsOCRModalOpen(true)}
+                  className="px-3 py-1 bg-[#00606B] text-white font-bold rounded-lg text-[11px] shrink-0 hover:bg-[#004D53] transition-colors"
+                >
+                  OCR Text Extractor
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 text-xs">
+                <div className="space-y-1">
+                  <label className="font-bold text-[#334648] flex justify-between">
+                    <span>Fasting Blood Glucose</span>
+                    <span className="text-[#7A9396] font-normal">mg/dL</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={biomarkers.fasting_glucose_mg_dl || 92}
+                    onChange={(e) => setBiomarkers({ ...biomarkers, fasting_glucose_mg_dl: parseFloat(e.target.value) || 90 })}
+                    className="w-full p-2.5 rounded-xl border border-[#D5E1DE] bg-[#F7FAFA] text-[#1C2826] font-medium"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-[#334648] flex justify-between">
+                    <span>HbA1c (Glycated Hb)</span>
+                    <span className="text-[#7A9396] font-normal">%</span>
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={biomarkers.hba1c_pct || 5.2}
+                    onChange={(e) => setBiomarkers({ ...biomarkers, hba1c_pct: parseFloat(e.target.value) || 5.0 })}
+                    className="w-full p-2.5 rounded-xl border border-[#D5E1DE] bg-[#F7FAFA] text-[#1C2826] font-medium"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-[#334648] flex justify-between">
+                    <span>LDL Cholesterol</span>
+                    <span className="text-[#7A9396] font-normal">mg/dL</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={biomarkers.ldl_cholesterol_mg_dl || 105}
+                    onChange={(e) => setBiomarkers({ ...biomarkers, ldl_cholesterol_mg_dl: parseFloat(e.target.value) || 100 })}
+                    className="w-full p-2.5 rounded-xl border border-[#D5E1DE] bg-[#F7FAFA] text-[#1C2826] font-medium"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-[#334648] flex justify-between">
+                    <span>HDL Cholesterol</span>
+                    <span className="text-[#7A9396] font-normal">mg/dL</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={biomarkers.hdl_cholesterol_mg_dl || 58}
+                    onChange={(e) => setBiomarkers({ ...biomarkers, hdl_cholesterol_mg_dl: parseFloat(e.target.value) || 50 })}
+                    className="w-full p-2.5 rounded-xl border border-[#D5E1DE] bg-[#F7FAFA] text-[#1C2826] font-medium"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-[#334648] flex justify-between">
+                    <span>Total Cholesterol</span>
+                    <span className="text-[#7A9396] font-normal">mg/dL</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={biomarkers.total_cholesterol_mg_dl || 180}
+                    onChange={(e) => setBiomarkers({ ...biomarkers, total_cholesterol_mg_dl: parseFloat(e.target.value) || 180 })}
+                    className="w-full p-2.5 rounded-xl border border-[#D5E1DE] bg-[#F7FAFA] text-[#1C2826] font-medium"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-[#334648] flex justify-between">
+                    <span>Blood Pressure (Systolic)</span>
+                    <span className="text-[#7A9396] font-normal">mmHg</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={biomarkers.systolic_bp || 118}
+                    onChange={(e) => setBiomarkers({ ...biomarkers, systolic_bp: parseInt(e.target.value) || 120 })}
+                    className="w-full p-2.5 rounded-xl border border-[#D5E1DE] bg-[#F7FAFA] text-[#1C2826] font-medium"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-[#334648] flex justify-between">
+                    <span>Blood Pressure (Diastolic)</span>
+                    <span className="text-[#7A9396] font-normal">mmHg</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={biomarkers.diastolic_bp || 76}
+                    onChange={(e) => setBiomarkers({ ...biomarkers, diastolic_bp: parseInt(e.target.value) || 80 })}
+                    className="w-full p-2.5 rounded-xl border border-[#D5E1DE] bg-[#F7FAFA] text-[#1C2826] font-medium"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-[#334648] flex justify-between">
+                    <span>Liver Enzyme (SGPT/ALT)</span>
+                    <span className="text-[#7A9396] font-normal">U/L</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={biomarkers.alt_u_l || 22}
+                    onChange={(e) => setBiomarkers({ ...biomarkers, alt_u_l: parseFloat(e.target.value) || 25 })}
+                    className="w-full p-2.5 rounded-xl border border-[#D5E1DE] bg-[#F7FAFA] text-[#1C2826] font-medium"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-[#334648] flex justify-between">
+                    <span>Kidney Filtration (eGFR)</span>
+                    <span className="text-[#7A9396] font-normal">mL/min</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={biomarkers.egfr_ml_min || 105}
+                    onChange={(e) => setBiomarkers({ ...biomarkers, egfr_ml_min: parseFloat(e.target.value) || 90 })}
+                    className="w-full p-2.5 rounded-xl border border-[#D5E1DE] bg-[#F7FAFA] text-[#1C2826] font-medium"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-[#334648] flex justify-between">
+                    <span>Thyroid Stimulating Hormone</span>
+                    <span className="text-[#7A9396] font-normal">uIU/mL</span>
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={biomarkers.tsh_uiu_ml || 1.8}
+                    onChange={(e) => setBiomarkers({ ...biomarkers, tsh_uiu_ml: parseFloat(e.target.value) || 2.0 })}
+                    className="w-full p-2.5 rounded-xl border border-[#D5E1DE] bg-[#F7FAFA] text-[#1C2826] font-medium"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Module 3: Lifestyle Questionnaire */}
+          {formTab === 'lifestyle' && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 text-xs">
+              <div className="space-y-1">
+                <label className="font-bold text-[#334648]">Sleep Hours (night)</label>
+                <div className="grid grid-cols-4 gap-1">
+                  {[5, 6, 7, 8].map((h) => (
+                    <button
+                      key={h}
+                      type="button"
+                      onClick={() => setHabits({ ...habits, sleep_hours: h })}
+                      className={`py-2 rounded-lg font-bold transition-all ${
+                        habits.sleep_hours === h ? 'bg-[#00606B] text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      {h}{h === 8 ? '+' : 'h'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-[#334648]">Exercise Duration (min/day)</label>
+                <input
+                  type="number"
+                  step="5"
+                  value={habits.exercise_minutes_per_day}
+                  onChange={(e) => setHabits({ ...habits, exercise_minutes_per_day: parseInt(e.target.value) || 0 })}
+                  className="w-full p-2.5 rounded-xl border border-[#D5E1DE] bg-[#F7FAFA] text-[#1C2826] font-medium"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-[#334648]">Exercise Frequency</label>
+                <div className="grid grid-cols-4 gap-1">
+                  {[
+                    { label: 'Never', days: 0 },
+                    { label: '2 Days', days: 2 },
+                    { label: '5 Days', days: 5 },
+                    { label: 'Daily', days: 7 }
+                  ].map((d) => (
+                    <button
+                      key={d.label}
+                      type="button"
+                      onClick={() => setHabits({ ...habits, exercise_days_per_week: d.days })}
+                      className={`py-2 text-[10.5px] rounded-lg font-bold transition-all ${
+                        habits.exercise_days_per_week === d.days ? 'bg-[#00606B] text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      {d.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-[#334648]">Daily Water Intake (Liters)</label>
+                <input
+                  type="number"
+                  step="0.2"
+                  value={habits.daily_water_liters}
+                  onChange={(e) => setHabits({ ...habits, daily_water_liters: parseFloat(e.target.value) || 2.0 })}
+                  className="w-full p-2.5 rounded-xl border border-[#D5E1DE] bg-[#F7FAFA] text-[#1C2826] font-medium"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-[#334648]">Fast Food Frequency (Meals/wk)</label>
+                <input
+                  type="number"
+                  value={habits.fast_food_meals_per_week}
+                  onChange={(e) => setHabits({ ...habits, fast_food_meals_per_week: parseInt(e.target.value) || 0 })}
+                  className="w-full p-2.5 rounded-xl border border-[#D5E1DE] bg-[#F7FAFA] text-[#1C2826] font-medium"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-[#334648] flex justify-between">
+                  <span>Stress Level</span>
+                  <span className="text-[#00606B] font-bold">{habits.stress_level_1_to_10} / 10</span>
+                </label>
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  value={habits.stress_level_1_to_10}
+                  onChange={(e) => setHabits({ ...habits, stress_level_1_to_10: parseInt(e.target.value) || 5 })}
+                  className="w-full accent-[#00606B]"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-[#334648]">Smoking Status</label>
+                <select
+                  value={habits.smoking_status}
+                  onChange={(e) => setHabits({ ...habits, smoking_status: e.target.value as 'never' | 'former' | 'current' })}
+                  className="w-full p-2.5 rounded-xl border border-[#D5E1DE] bg-[#F7FAFA] text-[#1C2826] font-medium"
+                >
+                  <option value="never">Never Smoked</option>
+                  <option value="former">Former Smoker</option>
+                  <option value="current">Current Smoker</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-[#334648]">Alcohol (Drinks/week)</label>
+                <input
+                  type="number"
+                  value={habits.alcohol_drinks_per_week}
+                  onChange={(e) => setHabits({ ...habits, alcohol_drinks_per_week: parseInt(e.target.value) || 0 })}
+                  className="w-full p-2.5 rounded-xl border border-[#D5E1DE] bg-[#F7FAFA] text-[#1C2826] font-medium"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Form Action Bar */}
+          <div className="flex items-center justify-between pt-3 border-t border-[#E2EEEC] flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => applyPreset('standard')}
+              className="px-3.5 py-2 text-slate-600 hover:text-slate-900 text-xs font-semibold hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+            >
+              Reset to Standard Healthy Baseline
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                runFullSimulation(biomarkers, habits);
+                setIsFormOpen(false);
+              }}
+              className="px-6 py-2.5 bg-[#00606B] hover:bg-[#004D53] text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-2 transition-all cursor-pointer"
+            >
+              <Sparkles className="w-4 h-4 text-[#00E5D4]" />
+              <span>Calculate AI Future Health Projections</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* AI Health Score & 6 Sub-Scores Grid */}
       {simResult && (

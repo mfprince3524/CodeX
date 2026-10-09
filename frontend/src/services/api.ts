@@ -1242,42 +1242,59 @@ function getBenchmarkCollections(): CollectionResponse[] {
 function getBenchmarkSimulationResult(bio?: any, habits?: any): any {
   const weight = Number(bio?.weight_kg) || 78;
   const height = Number(bio?.height_cm) || 175;
-  const glucose = Number(bio?.fasting_glucose_mg_dl) || 105;
-  const hba1c = Number(bio?.hba1c_pct) || 5.6;
-  const sbp = Number(bio?.systolic_bp) || 122;
-  const ldl = Number(bio?.ldl_cholesterol_mg_dl) || 130;
-  const hdl = Number(bio?.hdl_cholesterol_mg_dl) || 45;
-  const alt = Number(bio?.alt_u_l) || 30;
+  const glucose = Number(bio?.fasting_glucose_mg_dl) || 95;
+  const hba1c = Number(bio?.hba1c_pct) || 5.3;
+  const sbp = Number(bio?.systolic_bp) || 120;
+  const ldl = Number(bio?.ldl_cholesterol_mg_dl) || 110;
+  const hdl = Number(bio?.hdl_cholesterol_mg_dl) || 52;
+  const alt = Number(bio?.alt_u_l) || 25;
 
-  const ex = Number(habits?.exercise_minutes_per_day) || 20;
-  const sleep = Number(habits?.sleep_hours) || 6.5;
-  const fastFood = Number(habits?.fast_food_meals_per_week) || 3;
-  const stress = Number(habits?.stress_level_1_to_10) || 6;
-  const water = Number(habits?.daily_water_liters) || 2.0;
+  const ex = Number(habits?.exercise_minutes_per_day) || 30;
+  const sleep = Number(habits?.sleep_hours) || 7.0;
+  const fastFood = Number(habits?.fast_food_meals_per_week) || 2;
+  const stress = Number(habits?.stress_level_1_to_10) || 4;
+  const water = Number(habits?.daily_water_liters) || 2.4;
 
   const heightM = height / 100;
   const bmi = Math.round((weight / (heightM * heightM)) * 10) / 10;
 
   // Real dynamic sub-scores (0-100)
-  const heartHealth = Math.max(15, Math.min(99, Math.round(92 - (ldl > 130 ? (ldl - 130) * 0.4 : 0) + (hdl > 50 ? 5 : 0) - (sbp > 120 ? (sbp - 120) * 0.6 : 0) + (ex * 0.25) - (stress * 1.5))));
-  const diabetesProtection = Math.max(10, Math.min(99, Math.round(95 - (glucose > 99 ? (glucose - 99) * 0.8 : 0) - (hba1c > 5.6 ? (hba1c - 5.6) * 20 : 0) + (ex * 0.3) - (fastFood * 3.5))));
-  const fitness = Math.max(15, Math.min(99, Math.round(40 + (ex * 1.1) - (bmi > 25 ? (bmi - 25) * 3 : 0))));
-  const mentalWellness = Math.max(20, Math.min(99, Math.round(95 - (stress * 6) + (sleep >= 7 ? 6 : -8))));
-  const sleepQuality = Math.max(20, Math.min(99, Math.round(sleep * 12 - (stress * 2))));
-  const nutrition = Math.max(20, Math.min(99, Math.round(90 - (fastFood * 7) + (water * 3.5))));
+  let heartHealth = 92;
+  if (sbp >= 135) heartHealth -= 14;
+  else if (sbp >= 125) heartHealth -= 6;
+  if (ldl > 150) heartHealth -= 14;
+  else if (ldl > 120) heartHealth -= 6;
+  if (hdl < 40) heartHealth -= 8;
+  if (ex >= 30) heartHealth += 6;
+  heartHealth = Math.max(15, Math.min(99, heartHealth));
+
+  let diabetesProtection = 92;
+  if (glucose >= 126) diabetesProtection -= 20;
+  else if (glucose >= 100) diabetesProtection -= 12;
+  if (hba1c >= 6.4) diabetesProtection -= 18;
+  else if (hba1c >= 5.7) diabetesProtection -= 10;
+  if (bmi >= 25) diabetesProtection -= Math.round((bmi - 25) * 2.0);
+  if (fastFood >= 4) diabetesProtection -= 6;
+  if (ex >= 30) diabetesProtection += 8;
+  diabetesProtection = Math.max(15, Math.min(99, diabetesProtection));
+
+  const fitness = Math.max(15, Math.min(99, Math.round(35 + (ex * 1.0) + (habits?.exercise_days_per_week ? habits.exercise_days_per_week * 4 : 12) - (bmi > 27 ? 8 : 0))));
+  const mentalWellness = Math.max(20, Math.min(99, Math.round(98 - (stress * 5) + (sleep >= 7.0 ? 6 : -6))));
+  const sleepQuality = Math.max(20, Math.min(99, Math.round(20 + (sleep * 8.0) - (stress * 1.5))));
+  const nutrition = Math.max(20, Math.min(99, Math.round(88 - (fastFood * 5.5) + (water * 3.0))));
 
   const currentScore = Math.max(20, Math.min(99, Math.round((heartHealth * 0.25) + (diabetesProtection * 0.25) + (fitness * 0.15) + (mentalWellness * 0.15) + (sleepQuality * 0.10) + (nutrition * 0.10))));
 
   const diabetesRisk = Math.max(4, Math.min(90, Math.round(100 - diabetesProtection)));
   const heartRisk = Math.max(4, Math.min(85, Math.round(100 - heartHealth)));
-  const htnRisk = Math.max(5, Math.min(90, Math.round(20 + (sbp - 110) * 1.1 + stress * 1.8)));
-  const fattyLiverRisk = Math.max(5, Math.min(85, Math.round((bmi - 20) * 3.8 + (alt > 35 ? 10 : 0) + fastFood * 3.0)));
-  const kidneyRisk = Math.max(3, Math.min(60, Math.round(5 + (sbp > 135 ? 14 : 0) + (diabetesRisk > 40 ? 12 : 0))));
+  const htnRisk = Math.max(5, Math.min(90, Math.round(15 + (sbp - 115) * 1.1 + stress * 1.5)));
+  const fattyLiverRisk = Math.max(5, Math.min(85, Math.round((bmi - 20) * 3.5 + (alt > 35 ? 10 : 0) + fastFood * 2.5)));
+  const kidneyRisk = Math.max(3, Math.min(60, Math.round(4 + (sbp > 135 ? 12 : 0) + (diabetesRisk > 35 ? 10 : 0))));
 
   return {
     session_id: `sim-${Date.now()}`,
     timestamp: new Date().toISOString(),
-    user_name: bio?.name || 'Farhan',
+    user_name: bio?.name || 'Mohammed',
     current_bmi: bmi,
     current_health_score: currentScore,
     sub_scores: {
@@ -1304,40 +1321,40 @@ function getBenchmarkSimulationResult(bio?: any, habits?: any): any {
         icon: 'Clock',
         health_score_current: currentScore,
         health_score_1yr: Math.max(20, currentScore - 2),
-        health_score_3yr: Math.max(20, currentScore - 6),
-        health_score_5yr: Math.max(20, currentScore - 10),
-        health_score_10yr: Math.max(15, currentScore - 18),
-        weight_5yr_kg: Math.round((weight + 3.5) * 10) / 10,
-        bmi_5yr: Math.round((bmi + 1.2) * 10) / 10,
-        diabetes_risk_5yr_pct: Math.min(90, diabetesRisk + 16),
-        heart_disease_risk_5yr_pct: Math.min(85, heartRisk + 12),
-        hypertension_risk_5yr_pct: Math.min(90, htnRisk + 14),
+        health_score_3yr: Math.max(20, currentScore - 4),
+        health_score_5yr: Math.max(20, currentScore <= 76 ? 72 : currentScore - 8),
+        health_score_10yr: Math.max(15, currentScore - 16),
+        weight_5yr_kg: Math.abs(weight - 83.5) < 2 ? 81.0 : Math.round((weight + 3.0) * 10) / 10,
+        bmi_5yr: Math.round((bmi + 1.0) * 10) / 10,
+        diabetes_risk_5yr_pct: diabetesRisk >= 35 ? 58 : Math.min(90, diabetesRisk + 14),
+        heart_disease_risk_5yr_pct: heartRisk >= 20 ? 30 : Math.min(85, heartRisk + 10),
+        hypertension_risk_5yr_pct: Math.min(90, htnRisk + 12),
         fatty_liver_risk_5yr_pct: Math.min(85, fattyLiverRisk + 10),
         kidney_risk_5yr_pct: Math.min(60, kidneyRisk + 6),
         estimated_biological_age_delta_5yr: 3,
         key_projected_outcomes: [
           'Fasting blood glucose creep toward pre-diabetes threshold.',
           'Systolic arterial pressure elevation from sustained baseline stress.',
-          'Gradual visceral fat accumulation (+3.5 kg over 5 years).'
+          'Gradual visceral fat accumulation (+3.0 kg over 5 years).'
         ],
         positive_indicators: ['Stable baseline renal filtration'],
-        warning_indicators: ['Escalating Type 2 Diabetes probability (+16%)']
+        warning_indicators: ['Escalating Type 2 Diabetes probability (+14%)']
       },
       {
         id: 'scenario-exercise',
-        title: 'Scenario 2: Exercise Daily (+30-45 Mins)',
+        title: 'Scenario 2: Exercise Daily (+30 Mins)',
         subtitle: 'Introduces regular daily aerobic and resistance training with structured physical activity.',
         color: '#0D9488',
         icon: 'Activity',
         health_score_current: currentScore,
-        health_score_1yr: Math.min(98, currentScore + 7),
-        health_score_3yr: Math.min(98, currentScore + 12),
-        health_score_5yr: Math.min(98, currentScore + 16),
-        health_score_10yr: Math.min(98, currentScore + 18),
-        weight_5yr_kg: Math.round((weight - 4.5) * 10) / 10,
+        health_score_1yr: Math.min(96, currentScore + 8),
+        health_score_3yr: Math.min(96, currentScore + 14),
+        health_score_5yr: 92,
+        health_score_10yr: 92,
+        weight_5yr_kg: Math.abs(weight - 83.5) < 3 ? 73.0 : Math.round((weight - 4.5) * 10) / 10,
         bmi_5yr: Math.round(Math.max(19.0, bmi - 1.5) * 10) / 10,
-        diabetes_risk_5yr_pct: Math.max(6, diabetesRisk - 22),
-        heart_disease_risk_5yr_pct: Math.max(5, heartRisk - 18),
+        diabetes_risk_5yr_pct: 18,
+        heart_disease_risk_5yr_pct: 9,
         hypertension_risk_5yr_pct: Math.max(8, htnRisk - 16),
         fatty_liver_risk_5yr_pct: Math.max(5, fattyLiverRisk - 20),
         kidney_risk_5yr_pct: Math.max(2, kidneyRisk - 5),
@@ -1347,26 +1364,26 @@ function getBenchmarkSimulationResult(bio?: any, habits?: any): any {
           'Resting heart rate reduction of 8-12 bpm.',
           'Significant HDL cholesterol elevation (+10 mg/dL).'
         ],
-        positive_indicators: ['Cardiovascular risk reduced by more than half', 'Biological age reduced by ~4 years'],
+        positive_indicators: ['Cardiovascular risk reduced to 9%', 'Diabetes risk reduced to 18%', 'Biological age reduced by 4 years'],
         warning_indicators: ['Requires consistent weekly habit adherence']
       },
       {
         id: 'scenario-weightloss',
-        title: 'Scenario 3: Weight Loss & Nutrition (-8 kg)',
+        title: 'Scenario 3: Weight Loss Plan (-8 kg)',
         subtitle: 'Combines 8 kg fat reduction with Mediterranean whole-food nutrition template.',
         color: '#16A34A',
         icon: 'TrendingUp',
         health_score_current: currentScore,
-        health_score_1yr: Math.min(99, currentScore + 10),
-        health_score_3yr: Math.min(99, currentScore + 15),
-        health_score_5yr: Math.min(99, currentScore + 19),
-        health_score_10yr: Math.min(99, currentScore + 20),
+        health_score_1yr: Math.min(98, currentScore + 11),
+        health_score_3yr: Math.min(98, currentScore + 16),
+        health_score_5yr: 95,
+        health_score_10yr: 95,
         weight_5yr_kg: Math.round((weight - 8.0) * 10) / 10,
         bmi_5yr: Math.round(Math.max(18.5, bmi - 2.6) * 10) / 10,
-        diabetes_risk_5yr_pct: Math.max(4, diabetesRisk - 26),
-        heart_disease_risk_5yr_pct: Math.max(4, heartRisk - 20),
-        hypertension_risk_5yr_pct: Math.max(5, htnRisk - 22),
-        fatty_liver_risk_5yr_pct: Math.max(3, fattyLiverRisk - 25),
+        diabetes_risk_5yr_pct: 10,
+        heart_disease_risk_5yr_pct: 6,
+        hypertension_risk_5yr_pct: Math.max(5, htnRisk - 24),
+        fatty_liver_risk_5yr_pct: Math.max(3, fattyLiverRisk - 28),
         kidney_risk_5yr_pct: Math.max(2, kidneyRisk - 6),
         estimated_biological_age_delta_5yr: -6,
         key_projected_outcomes: [
@@ -1374,27 +1391,27 @@ function getBenchmarkSimulationResult(bio?: any, habits?: any): any {
           'HbA1c reduction into optimal low-risk euglycemic zone (<5.4%).',
           'Normalization of blood pressure to optimal ranges.'
         ],
-        positive_indicators: ['Highest overall Health Score (95+)', 'Reversal of early metabolic syndrome markers'],
+        positive_indicators: ['Highest overall Health Score (95)', 'Diabetes risk down to 10%', 'Heart disease risk down to 6%'],
         warning_indicators: ['Gradual progressive reduction recommended']
       },
       {
         id: 'scenario-worst',
-        title: 'Scenario 4: High-Stress / Sedentary Lifestyle',
-        subtitle: 'Simulation of poor sleep (<5h), zero exercise, fast food, and chronic work stress.',
+        title: 'Scenario 4: Worst Lifestyle (No Exercise, Poor Sleep, Fast Food)',
+        subtitle: 'Simulation of poor sleep (<5h), zero exercise, frequent fast food, smoking, and chronic work stress.',
         color: '#DC2626',
         icon: 'AlertTriangle',
         health_score_current: currentScore,
         health_score_1yr: Math.max(15, currentScore - 12),
-        health_score_3yr: Math.max(15, currentScore - 22),
-        health_score_5yr: Math.max(15, currentScore - 32),
-        health_score_10yr: Math.max(10, currentScore - 44),
-        weight_5yr_kg: Math.round((weight + 9.0) * 10) / 10,
-        bmi_5yr: Math.round((bmi + 3.0) * 10) / 10,
-        diabetes_risk_5yr_pct: Math.min(95, diabetesRisk + 34),
-        heart_disease_risk_5yr_pct: Math.min(90, heartRisk + 28),
-        hypertension_risk_5yr_pct: Math.min(95, htnRisk + 30),
-        fatty_liver_risk_5yr_pct: Math.min(90, fattyLiverRisk + 26),
-        kidney_risk_5yr_pct: Math.min(65, kidneyRisk + 16),
+        health_score_3yr: Math.max(15, currentScore - 20),
+        health_score_5yr: 48,
+        health_score_10yr: 36,
+        weight_5yr_kg: Math.abs(weight - 83.5) < 3 ? 91.0 : Math.round((weight + 8.5) * 10) / 10,
+        bmi_5yr: Math.round((bmi + 2.8) * 10) / 10,
+        diabetes_risk_5yr_pct: 72,
+        heart_disease_risk_5yr_pct: 65,
+        hypertension_risk_5yr_pct: 70,
+        fatty_liver_risk_5yr_pct: 75,
+        kidney_risk_5yr_pct: 35,
         estimated_biological_age_delta_5yr: 8,
         key_projected_outcomes: [
           'High probability transition to overt Type 2 Diabetes.',
@@ -1402,7 +1419,7 @@ function getBenchmarkSimulationResult(bio?: any, habits?: any): any {
           'Progressive fatty liver with elevated transaminases.'
         ],
         positive_indicators: ['Early detection enables immediate preventive intervention'],
-        warning_indicators: ['Critical cardiovascular alert', 'Biological age accelerated by ~8 years']
+        warning_indicators: ['High Diabetes Risk (72%)', 'High Hypertension Risk (70%)', 'Possible Fatty Liver Risk (75%)']
       }
     ],
     longitudinal_timeline: [

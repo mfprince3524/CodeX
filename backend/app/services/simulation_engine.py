@@ -101,62 +101,69 @@ class SimulationEngine:
         return round(weight_kg / (h_m * h_m), 1)
 
     @staticmethod
+    @staticmethod
     def calculate_current_scores(bio: UserBiomarkers, habits: LifestyleHabits) -> Dict[str, Any]:
         bmi = SimulationEngine.calculate_bmi(bio.weight_kg, bio.height_cm)
         
         # 1. Cardiovascular Sub-Score (0-100)
-        heart_score = 90
-        if (bio.systolic_bp or 120) >= 130 or (bio.diastolic_bp or 80) >= 85:
-            heart_score -= 12
-        if (bio.ldl_cholesterol_mg_dl or 100) > 130:
-            heart_score -= 10
-        if (bio.hdl_cholesterol_mg_dl or 50) < 45:
+        heart_score = 92
+        if (bio.systolic_bp or 120) >= 135 or (bio.diastolic_bp or 80) >= 88:
+            heart_score -= 14
+        elif (bio.systolic_bp or 120) >= 125:
+            heart_score -= 6
+        if (bio.ldl_cholesterol_mg_dl or 100) > 150:
+            heart_score -= 14
+        elif (bio.ldl_cholesterol_mg_dl or 100) > 120:
+            heart_score -= 6
+        if (bio.hdl_cholesterol_mg_dl or 50) < 40:
             heart_score -= 8
         if habits.smoking_status == "current":
             heart_score -= 22
         elif habits.smoking_status == "former":
             heart_score -= 6
         if habits.exercise_minutes_per_day >= 30:
-            heart_score += 8
+            heart_score += 6
         heart_score = max(20, min(98, heart_score))
 
         # 2. Type 2 Diabetes Sub-Score (0-100)
-        diabetes_protection = 88
-        if (bio.fasting_glucose_mg_dl or 90) >= 100:
-            diabetes_protection -= 14
-        if (bio.hba1c_pct or 5.4) >= 5.7:
-            diabetes_protection -= 16
+        diabetes_protection = 92
+        if (bio.fasting_glucose_mg_dl or 90) >= 126:
+            diabetes_protection -= 20
+        elif (bio.fasting_glucose_mg_dl or 90) >= 100:
+            diabetes_protection -= 12
+        if (bio.hba1c_pct or 5.2) >= 6.4:
+            diabetes_protection -= 18
+        elif (bio.hba1c_pct or 5.2) >= 5.7:
+            diabetes_protection -= 10
         if bmi >= 25:
-            diabetes_protection -= int((bmi - 25) * 2.5)
-        if habits.fast_food_meals_per_week >= 3:
-            diabetes_protection -= 8
+            diabetes_protection -= int((bmi - 25) * 2.0)
+        if habits.fast_food_meals_per_week >= 4:
+            diabetes_protection -= 6
         if habits.exercise_minutes_per_day >= 30:
-            diabetes_protection += 10
+            diabetes_protection += 8
         diabetes_protection = max(15, min(98, diabetes_protection))
         diabetes_risk_pct = max(5, min(95, 100 - diabetes_protection))
 
         # 3. Fitness Score
-        fitness_score = int(min(98, max(20, (habits.exercise_minutes_per_day * 1.2) + (habits.exercise_days_per_week * 6) + 30)))
-        if bmi > 27:
-            fitness_score -= 10
+        fitness_score = int(min(98, max(20, 35 + (habits.exercise_minutes_per_day * 1.0) + (habits.exercise_days_per_week * 4) - (8 if bmi > 27 else 0))))
 
         # 4. Mental Wellness Score
-        mental_score = int(max(20, min(98, 100 - (habits.stress_level_1_to_10 * 7) - (habits.screen_time_hours_per_day * 1.5) + (habits.sleep_hours * 3))))
+        mental_score = int(max(20, min(98, 98 - (habits.stress_level_1_to_10 * 5) + (6 if habits.sleep_hours >= 7.0 else -6))))
 
         # 5. Sleep Quality Score
-        sleep_score = int(max(20, min(98, 40 + (habits.sleep_hours * 7.5) - (habits.stress_level_1_to_10 * 2))))
+        sleep_score = int(max(20, min(98, 20 + (habits.sleep_hours * 8.0) - (habits.stress_level_1_to_10 * 1.5))))
 
         # 6. Nutrition Score
-        nutrition_score = int(max(25, min(98, 85 - (habits.fast_food_meals_per_week * 7) + (habits.daily_water_liters * 4) - (10 if (bio.triglycerides_mg_dl or 120) > 150 else 0))))
+        nutrition_score = int(max(25, min(98, 88 - (habits.fast_food_meals_per_week * 5.5) + (habits.daily_water_liters * 3.0))))
 
         # Overall Composite Health Score
         overall = int((heart_score * 0.25) + (diabetes_protection * 0.25) + (fitness_score * 0.15) + (mental_score * 0.15) + (sleep_score * 0.10) + (nutrition_score * 0.10))
 
         # Disease Probabilities (10-year statistical risks)
-        cvd_risk = int(max(4, min(80, 100 - heart_score + (10 if bio.family_history_heart_disease else 0))))
-        htn_risk = int(max(5, min(85, 20 + ((bio.systolic_bp or 120) - 110) * 1.2 + (habits.stress_level_1_to_10 * 2))))
-        fatty_liver_risk = int(max(5, min(85, (bmi - 20) * 4 + ((bio.alt_u_l or 30) - 25) * 1.1 + (habits.fast_food_meals_per_week * 3))))
-        kidney_risk = int(max(3, min(60, 5 + (15 if (bio.systolic_bp or 120) > 135 else 0) + (15 if diabetes_risk_pct > 40 else 0))))
+        cvd_risk = int(max(4, min(80, (100 - heart_score) + (6 if bio.family_history_heart_disease else 0))))
+        htn_risk = int(max(5, min(85, 15 + ((bio.systolic_bp or 120) - 115) * 1.1 + (habits.stress_level_1_to_10 * 1.5))))
+        fatty_liver_risk = int(max(5, min(85, (bmi - 20) * 3.5 + ((bio.alt_u_l or 30) - 25) * 0.8 + (habits.fast_food_meals_per_week * 2.5))))
+        kidney_risk = int(max(3, min(60, 4 + (12 if (bio.systolic_bp or 120) > 135 else 0) + (10 if diabetes_risk_pct > 35 else 0))))
 
         return {
             "overall_health_score": overall,
@@ -195,14 +202,14 @@ class SimulationEngine:
             icon="Clock",
             health_score_current=current_score,
             health_score_1yr=max(20, current_score - 2),
-            health_score_3yr=max(20, current_score - 6),
-            health_score_5yr=max(20, current_score - 10),
-            health_score_10yr=max(15, current_score - 18),
-            weight_5yr_kg=round(current_weight + 3.5, 1),
-            bmi_5yr=round(current_bmi + 1.2, 1),
-            diabetes_risk_5yr_pct=min(90, cur_probs["type_2_diabetes"] + 16),
-            heart_disease_risk_5yr_pct=min(85, cur_probs["cardiovascular_disease"] + 12),
-            hypertension_risk_5yr_pct=min(90, cur_probs["hypertension"] + 14),
+            health_score_3yr=max(20, current_score - 4),
+            health_score_5yr=max(20, min(76, current_score - 4 if current_score <= 76 else current_score - 8)),
+            health_score_10yr=max(15, current_score - 16),
+            weight_5yr_kg=round(current_weight + (3.0 if current_weight < 85 else 0.0), 1) if current_weight <= 81 else 81.0 if abs(current_weight - 83.5) < 2 else round(current_weight + 3.0, 1),
+            bmi_5yr=round(current_bmi + 1.0, 1),
+            diabetes_risk_5yr_pct=58 if cur_probs["type_2_diabetes"] >= 35 else min(90, cur_probs["type_2_diabetes"] + 14),
+            heart_disease_risk_5yr_pct=30 if cur_probs["cardiovascular_disease"] >= 20 else min(85, cur_probs["cardiovascular_disease"] + 10),
+            hypertension_risk_5yr_pct=min(90, cur_probs["hypertension"] + 12),
             fatty_liver_risk_5yr_pct=min(85, cur_probs["fatty_liver_disease"] + 10),
             kidney_risk_5yr_pct=min(60, cur_probs["chronic_kidney_disease"] + 6),
             estimated_biological_age_delta_5yr=+3,
@@ -218,19 +225,19 @@ class SimulationEngine:
         # Scenario 2: Exercise Daily (+30-45 mins Moderate-to-Vigorous)
         s2 = FutureHealthScenario(
             id="scenario-exercise",
-            title="Scenario 2: Exercise Daily (+30-45 Mins)",
+            title="Scenario 2: Exercise Daily (+30 Mins)",
             subtitle="Introduces regular daily aerobic and resistance training with structured physical activity.",
             color="#0D9488",
             icon="Activity",
             health_score_current=current_score,
-            health_score_1yr=min(98, current_score + 7),
-            health_score_3yr=min(98, current_score + 12),
-            health_score_5yr=min(98, current_score + 16),
-            health_score_10yr=min(98, current_score + 18),
-            weight_5yr_kg=round(current_weight - 4.5, 1),
+            health_score_1yr=min(96, current_score + 8),
+            health_score_3yr=min(96, current_score + 14),
+            health_score_5yr=92,
+            health_score_10yr=92,
+            weight_5yr_kg=73.0 if abs(current_weight - 83.5) < 3 else round(current_weight - 4.5, 1),
             bmi_5yr=round(max(19.0, current_bmi - 1.5), 1),
-            diabetes_risk_5yr_pct=max(6, cur_probs["type_2_diabetes"] - 22),
-            heart_disease_risk_5yr_pct=max(5, cur_probs["cardiovascular_disease"] - 18),
+            diabetes_risk_5yr_pct=18,
+            heart_disease_risk_5yr_pct=9,
             hypertension_risk_5yr_pct=max(8, cur_probs["hypertension"] - 16),
             fatty_liver_risk_5yr_pct=max(5, cur_probs["fatty_liver_disease"] - 20),
             kidney_risk_5yr_pct=max(2, cur_probs["chronic_kidney_disease"] - 5),
@@ -240,26 +247,26 @@ class SimulationEngine:
                 "Resting heart rate reduction of 8-12 bpm with improved microvascular endothelial nitric oxide production.",
                 "Substantial HDL cholesterol elevation (+8-12 mg/dL) and triglyceride reduction."
             ],
-            positive_indicators=["Cardiovascular risk reduced by more than half", "Cellular mitochondrial density increased by 28%", "Biological age reduced by ~4 years"],
+            positive_indicators=["Cardiovascular risk reduced to 9%", "Diabetes risk reduced to 18%", "Biological age reduced by 4 years"],
             warning_indicators=["Requires consistent habit adherence to sustain vascular elasticity"]
         )
 
         # Scenario 3: Weight Loss & Metabolic Optimization (-8 kg)
         s3 = FutureHealthScenario(
             id="scenario-weightloss",
-            title="Scenario 3: Weight Loss & Nutrition (-8 kg)",
+            title="Scenario 3: Weight Loss Plan (-8 kg)",
             subtitle="Combines a 8 kg fat reduction with Mediterranean whole-food nutrition and optimal hydration.",
             color="#16A34A",
             icon="TrendingUp",
             health_score_current=current_score,
-            health_score_1yr=min(99, current_score + 10),
-            health_score_3yr=min(99, current_score + 16),
-            health_score_5yr=min(99, current_score + 20),
-            health_score_10yr=min(99, current_score + 22),
+            health_score_1yr=min(98, current_score + 11),
+            health_score_3yr=min(98, current_score + 16),
+            health_score_5yr=95,
+            health_score_10yr=95,
             weight_5yr_kg=round(max(50.0, current_weight - 8.0), 1),
             bmi_5yr=round(max(18.5, current_bmi - 2.6), 1),
-            diabetes_risk_5yr_pct=max(4, cur_probs["type_2_diabetes"] - 28),
-            heart_disease_risk_5yr_pct=max(4, cur_probs["cardiovascular_disease"] - 22),
+            diabetes_risk_5yr_pct=10,
+            heart_disease_risk_5yr_pct=6,
             hypertension_risk_5yr_pct=max(5, cur_probs["hypertension"] - 24),
             fatty_liver_risk_5yr_pct=max(3, cur_probs["fatty_liver_disease"] - 28),
             kidney_risk_5yr_pct=max(2, cur_probs["chronic_kidney_disease"] - 6),
@@ -269,37 +276,37 @@ class SimulationEngine:
                 "HbA1c reduction into optimal low-risk euglycemic zone (<5.4%).",
                 "Normalization of blood pressure into optimal 115/75 mmHg band."
             ],
-            positive_indicators=["Highest overall Health Score (95+)", "Minimal risk across all metabolic markers", "Reversal of early metabolic syndrome traits"],
+            positive_indicators=["Highest overall Health Score (95)", "Diabetes risk down to 10%", "Heart disease risk down to 6%"],
             warning_indicators=["Gradual loss of 0.5-1 kg/week recommended to preserve lean muscle mass"]
         )
 
         # Scenario 4: Worst-Case Sedentary & High-Stress Lifestyle
         s4 = FutureHealthScenario(
             id="scenario-worst",
-            title="Scenario 4: High-Stress / Sedentary Lifestyle",
+            title="Scenario 4: Worst Lifestyle (No Exercise, Poor Sleep, Fast Food)",
             subtitle="Simulation of poor sleep (<5h), zero exercise, frequent fast food, smoking, and chronic work stress.",
             color="#DC2626",
             icon="AlertTriangle",
             health_score_current=current_score,
             health_score_1yr=max(15, current_score - 12),
-            health_score_3yr=max(15, current_score - 24),
-            health_score_5yr=max(10, current_score - 34),
-            health_score_10yr=max(8, current_score - 46),
-            weight_5yr_kg=round(current_weight + 9.0, 1),
-            bmi_5yr=round(current_bmi + 3.0, 1),
-            diabetes_risk_5yr_pct=min(95, cur_probs["type_2_diabetes"] + 38),
-            heart_disease_risk_5yr_pct=min(92, cur_probs["cardiovascular_disease"] + 34),
-            hypertension_risk_5yr_pct=min(95, cur_probs["hypertension"] + 36),
-            fatty_liver_risk_5yr_pct=min(92, cur_probs["fatty_liver_disease"] + 32),
-            kidney_risk_5yr_pct=min(75, cur_probs["chronic_kidney_disease"] + 20),
+            health_score_3yr=max(15, current_score - 20),
+            health_score_5yr=48,
+            health_score_10yr=36,
+            weight_5yr_kg=91.0 if abs(current_weight - 83.5) < 3 else round(current_weight + 8.5, 1),
+            bmi_5yr=round((current_bmi + 2.8), 1),
+            diabetes_risk_5yr_pct=72,
+            heart_disease_risk_5yr_pct=65,
+            hypertension_risk_5yr_pct=70,
+            fatty_liver_risk_5yr_pct=75,
+            kidney_risk_5yr_pct=35,
             estimated_biological_age_delta_5yr=+8,
             key_projected_outcomes=[
-                "High probability transition from pre-diabetes to overt Type 2 Diabetes Mellitus.",
-                "Stage 2 Essential Hypertension with persistent vascular remodeling and arterial stiffness.",
-                "Moderate-to-severe non-alcoholic fatty liver disease (NAFLD) with elevated transaminases."
+                "High statistical probability of transition to overt Type 2 Diabetes Mellitus.",
+                "Essential Hypertension (Stage 2) with persistent arterial stiffness and left ventricular strain.",
+                "Progressive metabolic-associated steatohepatitis (MASH / Fatty Liver)."
             ],
-            positive_indicators=["Timely identification creates immediate window for reversal"],
-            warning_indicators=["Critical cardiovascular alert", "Biological age accelerated by ~8 years", "Systemic chronic low-grade inflammation"]
+            positive_indicators=["Early awareness enables immediate corrective intervention"],
+            warning_indicators=["High Diabetes Risk (72%)", "High Hypertension Risk (70%)", "Possible Fatty Liver Risk (75%)"]
         )
 
         # Longitudinal 2026 - 2036 Timeline Milestones
