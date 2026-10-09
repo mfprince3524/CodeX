@@ -666,6 +666,7 @@ export const ResearchWorkspace: React.FC<ResearchWorkspaceProps> = ({
                 <div key={comp.id} className="space-y-3">
                   <MoleculeViewer
                     name={comp.name}
+                    chemblId={comp.chembl_id}
                     smiles={comp.smiles}
                     molecularFormula={comp.molecular_formula}
                     molecularWeight={comp.molecular_weight}

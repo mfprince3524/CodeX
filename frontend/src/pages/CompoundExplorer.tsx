@@ -212,6 +212,7 @@ export const CompoundExplorer: React.FC<CompoundExplorerProps> = ({
             {/* Molecule Overview Card */}
             <MoleculeViewer
               name={selectedCompound.name}
+              chemblId={selectedCompound.chembl_id}
               smiles={selectedCompound.smiles}
               molecularFormula={selectedCompound.molecular_formula}
               molecularWeight={selectedCompound.molecular_weight}
