@@ -18,7 +18,7 @@ interface CitationDrawerProps {
   isOpen: boolean;
   citation: CitationItem | null;
   onClose: () => void;
-  onSaveToCollection: (citation: CitationItem) => void;
+  onSaveToCollection?: (citation: CitationItem) => void;
 }
 
 export const CitationDrawer: React.FC<CitationDrawerProps> = ({
@@ -30,11 +30,11 @@ export const CitationDrawer: React.FC<CitationDrawerProps> = ({
   if (!isOpen || !citation) return null;
 
   return (
-    <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md glass-card border-l border-scientific-border shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-300">
+    <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white border-l border-scientific-border shadow-modal flex flex-col justify-between animate-in slide-in-from-right duration-300">
       {/* Header */}
-      <div className="p-5 border-b border-scientific-border flex items-center justify-between bg-white/80">
+      <div className="p-5 border-b border-scientific-border flex items-center justify-between bg-white">
         <div className="flex items-center gap-2.5">
-          <span className="px-2.5 py-1 text-xs font-extrabold text-scientific-primary bg-scientific-blueLight border border-blue-200 rounded-lg">
+          <span className="px-2.5 py-1 text-xs font-bold text-scientific-text bg-scientific-sage border border-scientific-sageDark/60 rounded-academic">
             {citation.marker}
           </span>
           <div>
@@ -48,7 +48,7 @@ export const CitationDrawer: React.FC<CitationDrawerProps> = ({
         </div>
         <button
           onClick={onClose}
-          className="p-1.5 text-scientific-muted hover:text-scientific-text rounded-lg hover:bg-slate-100 transition-colors"
+          className="p-1 text-scientific-muted hover:text-scientific-text rounded hover:bg-scientific-surfaceSubtle transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
@@ -67,20 +67,20 @@ export const CitationDrawer: React.FC<CitationDrawerProps> = ({
         </div>
 
         {/* Primary Evidence Excerpt Box */}
-        <div className="p-4 rounded-xl bg-gradient-to-br from-scientific-blueLight/60 to-scientific-cyanLight/40 border border-blue-200/80 space-y-2">
+        <div className="p-4 rounded-academic bg-scientific-bg border border-scientific-border space-y-2">
           <div className="flex items-center gap-1.5 text-scientific-primary font-bold text-[11px]">
             <FileCheck2 className="w-4 h-4" />
             <span>Direct Scientific Evidence Excerpt</span>
           </div>
-          <p className="text-slate-800 leading-relaxed font-medium italic">
+          <p className="text-scientific-text leading-relaxed font-normal">
             "{citation.evidence_excerpt}"
           </p>
         </div>
 
         {/* Why this matters */}
         {citation.why_it_matters && (
-          <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200/80 space-y-1 text-slate-700">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 block">
+          <div className="p-3.5 rounded-academic bg-scientific-sage/50 border border-scientific-sageDark/60 space-y-1 text-scientific-text">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-scientific-primary block">
               Why this evidence matters
             </span>
             <p className="leading-relaxed">
@@ -90,17 +90,17 @@ export const CitationDrawer: React.FC<CitationDrawerProps> = ({
         )}
 
         {/* Metadata Details */}
-        <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200 text-slate-700">
+        <div className="space-y-2.5 bg-scientific-surfaceSubtle p-4 rounded-academic border border-scientific-border text-scientific-text">
           <div className="flex items-start justify-between">
             <span className="text-scientific-muted font-medium">Study Methodology:</span>
-            <span className="font-bold text-right text-scientific-text max-w-[220px]">
+            <span className="font-semibold text-right max-w-[220px]">
               {citation.study_type}
             </span>
           </div>
 
           <div className="flex items-start justify-between">
             <span className="text-scientific-muted font-medium">Authors:</span>
-            <span className="font-semibold text-right text-slate-800 max-w-[220px]">
+            <span className="font-normal text-right max-w-[220px]">
               {citation.authors.join(', ')}
             </span>
           </div>
@@ -115,21 +115,12 @@ export const CitationDrawer: React.FC<CitationDrawerProps> = ({
           {citation.publication_date && (
             <div className="flex items-center justify-between">
               <span className="text-scientific-muted font-medium">Published:</span>
-              <span className="font-mono text-slate-800">{citation.publication_date}</span>
-            </div>
-          )}
-
-          {citation.institution && (
-            <div className="flex items-start justify-between">
-              <span className="text-scientific-muted font-medium">Lead Institution:</span>
-              <span className="font-medium text-right text-slate-800 max-w-[220px]">
-                {citation.institution}
-              </span>
+              <span className="font-mono">{citation.publication_date}</span>
             </div>
           )}
 
           {/* Identifiers */}
-          <div className="pt-2 border-t border-slate-200 flex items-center justify-between text-[11px] font-mono">
+          <div className="pt-2 border-t border-scientific-border flex items-center justify-between text-[11px] font-mono">
             {citation.pmid && (
               <div>
                 <span className="text-scientific-muted font-sans font-bold">PMID: </span>
@@ -139,7 +130,7 @@ export const CitationDrawer: React.FC<CitationDrawerProps> = ({
             {citation.doi && (
               <div>
                 <span className="text-scientific-muted font-sans font-bold">DOI: </span>
-                <span className="text-slate-700">{citation.doi}</span>
+                <span className="text-scientific-text">{citation.doi}</span>
               </div>
             )}
           </div>
@@ -147,23 +138,25 @@ export const CitationDrawer: React.FC<CitationDrawerProps> = ({
       </div>
 
       {/* Footer Actions */}
-      <div className="p-4 border-t border-scientific-border bg-white/90 flex items-center gap-3">
+      <div className="p-4 border-t border-scientific-border bg-white flex items-center gap-3">
         <a
           href={citation.source_url}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-scientific-primary text-white font-bold text-xs hover:bg-blue-600 shadow-premium shadow-scientific-primary/20 transition-all"
+          className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-academic bg-scientific-primary hover:bg-scientific-primaryHover text-white font-semibold text-xs shadow-subtle transition-all"
         >
-          <span>Open External Source</span>
+          <span>Open Verified Source</span>
           <ExternalLink className="w-3.5 h-3.5" />
         </a>
-        <button
-          onClick={() => onSaveToCollection(citation)}
-          title="Add to Research Collection"
-          className="p-2.5 rounded-xl border border-scientific-border text-scientific-text hover:bg-slate-100 hover:text-scientific-primary transition-colors flex items-center justify-center"
-        >
-          <Bookmark className="w-4 h-4" />
-        </button>
+        {onSaveToCollection && (
+          <button
+            onClick={() => onSaveToCollection(citation)}
+            title="Add to Research Collection"
+            className="p-2 rounded-academic border border-scientific-border text-scientific-text hover:bg-scientific-surfaceSubtle transition-colors flex items-center justify-center"
+          >
+            <Bookmark className="w-4 h-4 text-scientific-primary" />
+          </button>
+        )}
       </div>
     </div>
   );

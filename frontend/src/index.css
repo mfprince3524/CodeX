@@ -4,68 +4,44 @@
 
 @layer base {
   body {
-    @apply bg-[#F7FAFC] text-[#102033] font-sans antialiased selection:bg-[#0A5BFF]/10 selection:text-[#0A5BFF];
+    background-color: #FAFAF7;
+    color: #202522;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
-/* Custom scrollbars for scientific panels */
+/* Custom scrollbar for academic look */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #F1F5F9;
+  background: #FAFAF7;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
-  border-radius: 9999px;
+  background: #D5D8D2;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
+  background: #AAB0A6;
 }
 
-/* Glassmorphism utility */
-.glass-panel {
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(229, 234, 240, 0.9);
+/* Code & academic badges */
+code, pre {
+  font-family: 'JetBrains Mono', monospace;
 }
 
-.glass-card {
-  background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid #E5EAF0;
-}
-
-/* Citation hover styling */
-.citation-chip {
+.scientific-badge {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  padding: 0 5px;
-  margin: 0 2px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #0A5BFF;
-  background-color: #EBF3FF;
-  border: 1px solid #C2DCFF;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.15s ease-in-out;
-  vertical-align: baseline;
-  line-height: 1.35;
-  user-select: none;
-}
-
-.citation-chip:hover {
-  background-color: #0A5BFF;
-  color: #FFFFFF;
-  border-color: #0A5BFF;
-  box-shadow: 0 2px 6px rgba(10, 91, 255, 0.25);
-  transform: translateY(-1px);
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  letter-spacing: 0.01em;
 }

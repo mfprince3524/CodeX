@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 
 class EvidenceType(str, Enum):
@@ -22,6 +22,7 @@ class SourceType(str, Enum):
     CHEMBL = "ChEMBL"
     CLINICAL_TRIALS = "ClinicalTrials.gov"
     DRUGBANK = "DrugBank"
+    EUROPE_PMC = "Europe PMC"
 
 class TrialStatus(str, Enum):
     RECRUITING = "Recruiting"
@@ -43,14 +44,16 @@ class CitationItem(BaseModel):
     pmid: Optional[str] = None
     doi: Optional[str] = None
     source_id: Optional[str] = None
-    source_type: SourceType = SourceType.PUBMED
+    source_type: str = "PubMed"
+    source_name: Optional[str] = "NCBI PubMed"
     source_url: str
     study_type: str = "Observational / In vitro"
     institution: Optional[str] = None
     evidence_excerpt: str
+    abstract: Optional[str] = None
     relevance_score: float = Field(default=0.85, ge=0.0, le=1.0)
     why_it_matters: str = ""
-    retrieval_timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat() + "Z")
+    retrieval_timestamp: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class ConflictRecord(BaseModel):
     id: str
@@ -75,7 +78,7 @@ class EvidenceClaim(BaseModel):
 # Graph Models (React Flow compatible)
 class GraphNode(BaseModel):
     id: str
-    type: str  # disease, compound, target, mechanism, publication, researcher, clinical_trial, organization
+    type: str  # disease, compound, target, mechanism, publication, clinical_trial, gene, protein
     data: Dict[str, Any]
     position: Dict[str, float] = {"x": 0.0, "y": 0.0}
 
@@ -137,7 +140,7 @@ class DiseaseDetail(BaseModel):
 class ClinicalTrialDetail(BaseModel):
     nct_id: str
     title: str
-    status: TrialStatus = TrialStatus.UNKNOWN
+    status: str = "Active"
     phase: Optional[str] = None
     condition: str
     intervention: str
@@ -162,7 +165,7 @@ class ResearcherDetail(BaseModel):
 class OrganizationDetail(BaseModel):
     id: str
     name: str
-    org_type: str  # "Research Institution", "Biotech/Pharma Sponsor", "Publisher", "Regulatory Agency"
+    org_type: str
     country: Optional[str] = None
     key_investigators: List[str] = []
     active_trials_count: int = 0
@@ -172,7 +175,7 @@ class OrganizationDetail(BaseModel):
 # Confidence Analytics
 class ConfidenceMetrics(BaseModel):
     overall_confidence: float = Field(ge=0.0, le=1.0)
-    label: str  # "High Confidence", "Moderate Confidence", "Preliminary Evidence"
+    label: str
     relevant_sources_count: int
     source_diversity: float = Field(ge=0.0, le=1.0)
     recency_score: float = Field(ge=0.0, le=1.0)
@@ -194,7 +197,7 @@ class ClarificationQuestion(BaseModel):
 
 class ClarificationResponse(BaseModel):
     needs_clarification: bool
-    identified_entities: Dict[str, List[str]] = {}  # compounds, diseases, targets
+    identified_entities: Dict[str, List[str]] = {}
     clarification_message: Optional[str] = None
     questions: List[ClarificationQuestion] = []
     recommended_focus: Optional[str] = None
@@ -202,10 +205,10 @@ class ClarificationResponse(BaseModel):
 # Query Request / Response
 class ResearchQueryRequest(BaseModel):
     query: str
-    focus: Optional[str] = "Mechanism & Clinical"  # Mechanism, Clinical, Preclinical, Safety, All
-    timeframe: Optional[str] = "All"  # "Last 5 years", "Last 10 years", "All"
+    focus: Optional[str] = "Mechanism & Clinical"
+    timeframe: Optional[str] = "All"
     evidence_type: Optional[str] = "All"
-    sources: List[str] = ["PubMed", "ChEMBL", "ClinicalTrials.gov", "DrugBank"]
+    sources: List[str] = ["PubMed", "ChEMBL", "ClinicalTrials.gov", "Europe PMC"]
     clarification_answers: Optional[Dict[str, Any]] = None
     is_demo: bool = False
 
@@ -251,6 +254,70 @@ class ResearchQueryResult(BaseModel):
     organizations: List[OrganizationDetail] = []
     related_queries: List[str] = []
 
+# Literature Search
+class LiteratureSearchRequest(BaseModel):
+    query: str
+    year_start: Optional[int] = None
+    year_end: Optional[int] = None
+    study_type: Optional[str] = "All"
+    sort_by: Optional[str] = "relevance"  # "relevance", "date_desc"
+    limit: Optional[int] = 15
+
+class LiteratureSearchResponse(BaseModel):
+    query: str
+    total_found: int
+    papers: List[CitationItem]
+    sources_used: List[str]
+    latency_ms: float
+
+# Conflict Radar Models
+class StudyEvidenceItem(BaseModel):
+    id: str
+    title: str
+    authors: List[str] = []
+    journal: str
+    year: int
+    pmid: Optional[str] = None
+    doi: Optional[str] = None
+    source_url: str
+    study_type: str  # Clinical Trial, In Vitro, In Vivo Animal, Cohort Study, Meta-Analysis
+    experimental_model: str  # e.g., "Primary Murine Neurons", "Transgenic 5xFAD Mice", "Phase 2 Human Cohort"
+    dosage_or_concentration: Optional[str] = None
+    classification: str  # "supporting", "conflicting", "inconclusive"
+    main_finding: str
+    limitations: str
+    evidence_explanation: str
+    requires_human_review: bool = False
+
+class ConflictRadarAnalysis(BaseModel):
+    target_topic: str
+    consensus_summary: str
+    overall_classification: str  # "Mixed Evidence", "Consensus Supporting", "Disputed"
+    supporting_studies: List[StudyEvidenceItem] = []
+    conflicting_studies: List[StudyEvidenceItem] = []
+    inconclusive_studies: List[StudyEvidenceItem] = []
+    methodological_divergence: str
+    experimental_context_explanation: str
+    citations_count: int
+
+# Research Gap Models
+class ResearchGapItem(BaseModel):
+    id: str
+    research_question: str
+    why_it_matters: str
+    what_literature_shows: str
+    missing_or_limited_evidence: str
+    suggested_investigation_or_experiments: str
+    relevant_citations: List[str] = []
+    gap_category: str  # "Clinical Translation", "Dosing & Exposure", "Mechanism & Off-Target", "Biomarker Validation"
+
+class ResearchGapAnalysis(BaseModel):
+    topic: str
+    identified_gaps: List[ResearchGapItem] = []
+    overview_summary: str
+    disclaimer: str = "Potential research gaps identified in the retrieved literature. Not experimentally validated claims."
+    retrieved_papers_count: int
+
 # Collections
 class CollectionItem(BaseModel):
     id: str
@@ -264,7 +331,7 @@ class CollectionItem(BaseModel):
 class CollectionCreate(BaseModel):
     title: str
     description: Optional[str] = None
-    color: Optional[str] = "#0A5BFF"
+    color: Optional[str] = "#527A62"
 
 class CollectionResponse(BaseModel):
     id: str
@@ -274,3 +341,20 @@ class CollectionResponse(BaseModel):
     created_at: str
     items_count: int
     items: List[CollectionItem] = []
+
+# Settings & Telemetry
+class DataSourceStatus(BaseModel):
+    name: str
+    endpoint: str
+    is_connected: bool
+    latency_ms: float
+    last_ping: str
+    rate_limit_info: str
+
+class SystemSettings(BaseModel):
+    llm_provider: str = "evidence_only"  # "evidence_only", "gemini", "openai", "anthropic"
+    gemini_api_key_configured: bool = False
+    openai_api_key_configured: bool = False
+    cache_enabled: bool = True
+    active_sources: List[str] = ["PubMed", "Europe PMC", "ChEMBL", "ClinicalTrials.gov"]
+    safety_disclaimer_version: str = "2026.1"

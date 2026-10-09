@@ -30,10 +30,11 @@ export const ClinicalTrialsExplorer: React.FC<ClinicalTrialsExplorerProps> = ({ 
   const loadTrials = async (q?: string) => {
     setIsLoading(true);
     try {
-      const data = await api.getClinicalTrials({
-        q: q || searchQuery,
-        status: selectedStatus === 'All' ? undefined : selectedStatus
-      });
+      const data = await api.getClinicalTrials(
+        q || searchQuery,
+        undefined,
+        selectedStatus === 'All' ? undefined : selectedStatus
+      );
       setTrials(data);
     } finally {
       setIsLoading(false);

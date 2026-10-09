@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from app.core.config import settings
 from app.core.database import init_db
 from app.core.logging import logger
-from app.api import research, compounds, diseases, clinical_trials, collections, health
+from app.api import research, compounds, diseases, clinical_trials, collections, health, simulator
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -31,6 +31,7 @@ app.add_middleware(
 
 # Include API Routers under configured prefix
 app.include_router(health.router, prefix=settings.API_PREFIX)
+app.include_router(simulator.router, prefix=settings.API_PREFIX)
 app.include_router(research.router, prefix=settings.API_PREFIX)
 app.include_router(compounds.router, prefix=settings.API_PREFIX)
 app.include_router(diseases.router, prefix=settings.API_PREFIX)

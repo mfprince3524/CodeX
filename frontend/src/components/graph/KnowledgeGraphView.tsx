@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   ReactFlow,
   Controls,
@@ -22,12 +22,15 @@ import {
   ShieldCheck,
   Building2,
   Info,
-  Maximize2
+  ExternalLink,
+  ChevronRight,
+  Filter
 } from 'lucide-react';
 
 interface KnowledgeGraphViewProps {
   graph: KnowledgeGraph;
   onSelectNodeDetail?: (nodeData: any) => void;
+  onSelectEdgeDetail?: (edgeData: any) => void;
 }
 
 // Custom Node Renderers with Scientific styling
@@ -35,44 +38,47 @@ const CustomBiomedicalNode = ({ data, type }: { data: any; type: string }) => {
   const getIcon = () => {
     switch (type) {
       case 'disease':
-        return <Dna className="w-4 h-4 text-rose-500" />;
+        return <Dna className="w-3.5 h-3.5 text-rose-700" />;
       case 'compound':
-        return <Pill className="w-4 h-4 text-blue-500" />;
+        return <Pill className="w-3.5 h-3.5 text-scientific-primary" />;
       case 'target':
-        return <Target className="w-4 h-4 text-teal-500" />;
+        return <Target className="w-3.5 h-3.5 text-teal-700" />;
       case 'mechanism':
-        return <Zap className="w-4 h-4 text-purple-500" />;
+        return <Zap className="w-3.5 h-3.5 text-purple-700" />;
       case 'publication':
-        return <BookOpen className="w-4 h-4 text-emerald-500" />;
+        return <BookOpen className="w-3.5 h-3.5 text-emerald-700" />;
+      case 'gene':
+        return <Dna className="w-3.5 h-3.5 text-blue-700" />;
       case 'clinical_trial':
-        return <ShieldCheck className="w-4 h-4 text-amber-500" />;
+        return <ShieldCheck className="w-3.5 h-3.5 text-amber-700" />;
       default:
-        return <Building2 className="w-4 h-4 text-slate-500" />;
+        return <Building2 className="w-3.5 h-3.5 text-slate-700" />;
     }
   };
 
   const getBorderColor = () => {
     switch (type) {
-      case 'disease': return 'border-rose-300 shadow-rose-500/10';
-      case 'compound': return 'border-blue-300 shadow-blue-500/10';
-      case 'target': return 'border-teal-300 shadow-teal-500/10';
-      case 'mechanism': return 'border-purple-300 shadow-purple-500/10';
-      case 'publication': return 'border-emerald-300 shadow-emerald-500/10';
-      case 'clinical_trial': return 'border-amber-300 shadow-amber-500/10';
-      default: return 'border-slate-300';
+      case 'disease': return 'border-rose-300 bg-rose-50/40';
+      case 'compound': return 'border-scientific-sageDark bg-scientific-sage/30';
+      case 'target': return 'border-teal-300 bg-teal-50/40';
+      case 'mechanism': return 'border-purple-300 bg-purple-50/40';
+      case 'publication': return 'border-emerald-300 bg-emerald-50/40';
+      case 'gene': return 'border-blue-300 bg-blue-50/40';
+      case 'clinical_trial': return 'border-amber-300 bg-amber-50/40';
+      default: return 'border-scientific-border bg-white';
     }
   };
 
   return (
-    <div className={`px-3.5 py-2.5 rounded-xl bg-white shadow-premium border ${getBorderColor()} min-w-[170px] max-w-[220px] transition-all hover:scale-105`}>
-      <Handle type="target" position={Position.Top} className="w-2 h-2 !bg-slate-400" />
-      <div className="flex items-center gap-2 mb-1">
+    <div className={`px-3 py-2 rounded-academic bg-white shadow-card border ${getBorderColor()} min-w-[170px] max-w-[220px] transition-all hover:scale-105 cursor-pointer`}>
+      <Handle type="target" position={Position.Top} className="w-1.5 h-1.5 !bg-scientific-muted" />
+      <div className="flex items-center gap-1.5 mb-1">
         {getIcon()}
-        <span className="text-[10px] font-bold uppercase tracking-wider text-scientific-muted truncate">
+        <span className="text-[9.5px] font-bold uppercase tracking-wider text-scientific-muted truncate">
           {data.category || type}
         </span>
       </div>
-      <div className="text-xs font-bold text-scientific-text truncate">
+      <div className="text-xs font-semibold text-scientific-text truncate">
         {data.label}
       </div>
       {data.journal && (
@@ -80,7 +86,7 @@ const CustomBiomedicalNode = ({ data, type }: { data: any; type: string }) => {
           {data.journal} ({data.year})
         </div>
       )}
-      <Handle type="source" position={Position.Bottom} className="w-2 h-2 !bg-slate-400" />
+      <Handle type="source" position={Position.Bottom} className="w-1.5 h-1.5 !bg-scientific-muted" />
     </div>
   );
 };
@@ -91,45 +97,66 @@ const nodeTypes = {
   target: (props: any) => <CustomBiomedicalNode {...props} type="target" />,
   mechanism: (props: any) => <CustomBiomedicalNode {...props} type="mechanism" />,
   publication: (props: any) => <CustomBiomedicalNode {...props} type="publication" />,
+  gene: (props: any) => <CustomBiomedicalNode {...props} type="gene" />,
   clinical_trial: (props: any) => <CustomBiomedicalNode {...props} type="clinical_trial" />
 };
 
 export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
   graph,
-  onSelectNodeDetail
+  onSelectNodeDetail,
+  onSelectEdgeDetail
 }) => {
-  // Map GraphNodes into React Flow Nodes
-  const initialNodes: Node[] = graph.nodes.map((n) => ({
-    id: n.id,
-    type: n.type,
-    data: n.data,
-    position: n.position
-  }));
-
-  const initialEdges: Edge[] = graph.edges.map((e) => ({
-    id: e.id,
-    source: e.source,
-    target: e.target,
-    label: e.label,
-    animated: e.animated,
-    style: e.style || { stroke: '#94A3B8', strokeWidth: 1.5 },
-    labelStyle: { fontSize: 10, fill: '#64748B', fontWeight: 600 }
-  }));
-
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState<any>(null);
+  const [selectedEdge, setSelectedEdge] = useState<any>(null);
+
+  useEffect(() => {
+    if (graph && graph.nodes) {
+      setNodes(
+        graph.nodes.map((n) => ({
+          id: n.id,
+          type: n.type,
+          data: n.data,
+          position: n.position
+        }))
+      );
+    }
+    if (graph && graph.edges) {
+      setEdges(
+        graph.edges.map((e) => ({
+          id: e.id,
+          source: e.source,
+          target: e.target,
+          label: e.label,
+          animated: e.animated,
+          style: e.style || { stroke: '#527A62', strokeWidth: 1.5 },
+          labelStyle: { fontSize: 9.5, fill: '#737873', fontWeight: 600 }
+        }))
+      );
+    }
+  }, [graph, setNodes, setEdges]);
 
   const handleNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
       setSelectedNode(node.data);
+      setSelectedEdge(null);
       if (onSelectNodeDetail) onSelectNodeDetail(node.data);
     },
     [onSelectNodeDetail]
   );
 
+  const handleEdgeClick = useCallback(
+    (_: React.MouseEvent, edge: Edge) => {
+      setSelectedEdge(edge);
+      setSelectedNode(null);
+      if (onSelectEdgeDetail) onSelectEdgeDetail(edge);
+    },
+    [onSelectEdgeDetail]
+  );
+
   return (
-    <div className="relative w-full h-[540px] rounded-2xl border border-scientific-border bg-gradient-to-br from-slate-50 via-white to-blue-50/20 overflow-hidden shadow-card">
+    <div className="relative w-full h-[560px] rounded-academic border border-scientific-border bg-scientific-bg overflow-hidden shadow-subtle">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -137,13 +164,14 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeClick={handleNodeClick}
+        onEdgeClick={handleEdgeClick}
         fitView
       >
-        <Background color="#CBD5E1" gap={18} size={1} />
-        <Controls className="!bg-white !border-slate-200 !shadow-sm !rounded-xl" />
+        <Background color="#E6E8E3" gap={18} size={1} />
+        <Controls className="!bg-white !border-scientific-border !shadow-subtle !rounded-academic" />
         <MiniMap
-          nodeStrokeWidth={3}
-          className="!bg-white !border-slate-200 !rounded-xl !overflow-hidden"
+          nodeStrokeWidth={2}
+          className="!bg-white !border-scientific-border !rounded-academic !overflow-hidden"
           zoomable
           pannable
         />
@@ -151,10 +179,10 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
 
       {/* Selected Node Details Floating Overlay */}
       {selectedNode && (
-        <div className="absolute bottom-4 left-4 max-w-sm glass-card p-4 rounded-xl border border-scientific-border shadow-lg animate-in fade-in space-y-2 z-10">
+        <div className="absolute bottom-4 left-4 max-w-sm bg-white p-4 rounded-academic border border-scientific-border shadow-modal space-y-2 z-10 animate-in fade-in">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold uppercase tracking-wider text-scientific-primary">
-              Entity Inspector
+              Entity Property Inspector
             </span>
             <button
               onClick={() => setSelectedNode(null)}
@@ -166,16 +194,55 @@ export const KnowledgeGraphView: React.FC<KnowledgeGraphViewProps> = ({
           <h4 className="text-xs font-bold text-scientific-text">
             {selectedNode.label}
           </h4>
+          {selectedNode.category && (
+            <span className="inline-block px-1.5 py-0.5 text-[9.5px] font-medium bg-scientific-sage rounded text-scientific-text">
+              {selectedNode.category}
+            </span>
+          )}
           {selectedNode.description && (
             <p className="text-[11px] text-scientific-muted leading-relaxed">
               {selectedNode.description}
             </p>
           )}
           {selectedNode.smiles && (
-            <div className="text-[10px] font-mono text-slate-600 bg-slate-100 p-1.5 rounded truncate">
+            <div className="text-[10px] font-mono text-scientific-text bg-scientific-bg p-1.5 rounded border border-scientific-border truncate">
               SMILES: {selectedNode.smiles}
             </div>
           )}
+          {selectedNode.pmid && (
+            <a
+              href={selectedNode.source_url || `https://pubmed.ncbi.nlm.nih.gov/${selectedNode.pmid}/`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[10.5px] text-scientific-primary font-semibold hover:underline flex items-center gap-1 pt-1"
+            >
+              <span>View Source Paper (PMID: {selectedNode.pmid})</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          )}
+        </div>
+      )}
+
+      {/* Selected Edge Details Floating Overlay */}
+      {selectedEdge && (
+        <div className="absolute bottom-4 left-4 max-w-sm bg-white p-4 rounded-academic border border-scientific-border shadow-modal space-y-2 z-10 animate-in fade-in">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-scientific-primary">
+              Relationship Evidence Link
+            </span>
+            <button
+              onClick={() => setSelectedEdge(null)}
+              className="text-[10px] text-scientific-muted hover:text-scientific-text font-bold"
+            >
+              Close
+            </button>
+          </div>
+          <div className="text-xs font-semibold text-scientific-text">
+            Relationship: {selectedEdge.label || 'Direct Association'}
+          </div>
+          <p className="text-[11px] text-scientific-muted">
+            Connection between <strong className="text-scientific-text">{selectedEdge.source}</strong> and <strong className="text-scientific-text">{selectedEdge.target}</strong> verified through retrieved literature.
+          </p>
         </div>
       )}
     </div>
